@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "DirectoryMonitor.h"
-#include "..//Utilities//Helpers.h"
+#include <string>
 
 
 
@@ -106,46 +106,18 @@ void CDirectoryMonitor::GetNextPcapfile(std::string &file,std::string &dir)
 
 	l_objDirInfo = l_listCopiedFile.front();
 
-	if("" == m_curDir) m_curDir = l_objDirInfo.dirname;
-
-	if(l_objDirInfo.dirname != m_curDir)
-	{
-		if(m_mapFoundFiles.find(m_curDir)->second.nFileCount != 0)
-		{
-			std::list<stCompletedDirInfo>::iterator it;
-			while(it != l_listCopiedFile.end())
-			{
-				if(it->dirname == m_curDir)
-				{
-					file = l_objDirInfo.filepath;
-					dir = l_objDirInfo.dirname;
-
-					EnterCriticalSection(&CriticalSection);
-
-					m_listCopiedFile.erase(m_listCopiedFile.begin(),it);;
-
-					LeaveCriticalSection(&CriticalSection);
-
-					return;
-				}
-
-				it++;
-			}
-		}
-
-		m_curDir = l_objDirInfo.dirname;
-	}
+	file = l_objDirInfo.filepath;
+	dir = l_objDirInfo.dirname;
 
 	EnterCriticalSection(&CriticalSection);
 
 	m_listCopiedFile.erase(m_listCopiedFile.begin());;
 
 	LeaveCriticalSection(&CriticalSection);
-	
 
 
-	file = l_objDirInfo.filepath;
-	dir = l_objDirInfo.dirname;
+	return;
+
 }
 
 int CDirectoryMonitor::RemoveFileinfo(std::string &file , std::string &dir)
@@ -247,7 +219,7 @@ bool CDirectoryMonitor::SearchFilesinSubDirectory(LPCTSTR pstrDir,std::string di
 	_tcsncpy(szPath, pstrDir, MAX_PATH);
 	//////////////////////////////////
 
-	::PathAppend(szPath, _T("*.pcap"));
+	::PathAppend(szPath, _T("*.*"));
 
 	hFind = ::FindFirstFile(szPath, &wfd);
 	if(hFind != INVALID_HANDLE_VALUE)
@@ -296,7 +268,11 @@ bool CDirectoryMonitor::CheckIfFileCopiedCompletely()
 	{
 		//if all the file are already copied in a dir then dont go for it
 		if(it->second.nFileCount == it->second.nFileCountCompletlyCopied)
+		{
 			it++;
+			continue;
+		}
+
 
 		std::map<std::string,stSingleFileInfo> *l_mapListofFileFound;
 		l_mapListofFileFound = &((*it).second.mapListofFileFound);
@@ -309,9 +285,9 @@ bool CDirectoryMonitor::CheckIfFileCopiedCompletely()
 				LONGLONG currentsize=0;
 				char* filename = const_cast<char*>(fileitr->first.c_str());
 
-				ComputeFileSize(filename,currentsize);
+				//ComputeFileSize(filename,currentsize);
 
-				if(0 == currentsize - fileitr->second.filesize)
+				//if(0 == currentsize - fileitr->second.filesize)
 				{
 					
 					stCompletedDirInfo l_objDirInfo;
